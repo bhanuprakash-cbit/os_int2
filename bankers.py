@@ -1,86 +1,61 @@
-class BankerAlgorithm:
-    def __init__(self, processes, resources, max_demand, allocated):
-        self.processes = processes
-        self.resources = resources
-        self.max_demand = max_demand
-        self.allocated = allocated
-        self.available = [resources[j] - sum(allocated[i][j] for i in range(len(processes))) for j in range(len(resources))]
+# procs = int(input('Enter the number of processes: '))
+# resrs = list(map(int, input('Enter the total resources of system: ').split()))
 
+procs = 5
+resrs = [10,5,7]
 
-    def check_safety(self, process, request):
-        # Check if the request is within the maximum demand of the process
-        if all(request[i] <= self.max_demand[process][i] - self.allocated[process][i] for i in range(len(self.resources))):
-            # Try allocating the resources temporarily
-            temp_allocated = [self.allocated[process][j] + request[j] for j in range(len(self.resources))]
+alloc = [[0,1,0],[2,0,0],[3,0,2],[2,1,1],[0,0,2]]
+max_need = [[7,5,3],[3,2,2],[9,0,2],[4,2,2],[5,3,3]]
 
-            temp_available = [self.available[j] - request[j] for j in range(len(self.resources))]
+# alloc = []
+# max_need = []
 
-            # Check if the system remains in a safe state
-            if self.safety_check(temp_allocated, temp_available):
-                return True
-            else:
-                return False
-        else:
-            return False
+# print('Enter the allocated resources in matrix form: ')
+# for i in range(procs):
+#     temp = list(map(int, input().split()))
+#     alloc.append(temp)
 
-    def safety_check(self, temp_allocated, temp_available):
-        work = temp_available.copy()
-        finish = [False] * len(self.processes)
+# print('Enter the max need of resources in matrix form: ')    
+# for i in range(procs):
+#     temp = list(map(int, input().split()))
+#     max_need.append(temp)
 
-        # Check if a process can finish with the available resources
-        while True:
-            found = False
-            for i in range(len(self.processes)):
-                if not finish[i] and all(temp_allocated[i][j] <= work[j] for j in range(len(self.resources))):
-                    # If the process can finish, release its resources
-                    work = [work[j] + temp_allocated[i][j] for j in range(len(self.resources))]
-                    finish[i] = True
-                    found = True
+avail = []
+for i in range(len(resrs)):
+    l = 0
+    for j in range(procs):
+        l += alloc[j][i]
+    avail.append(l)
 
-            # If no process can finish in this iteration, break the loop
-            if not found:
-                break
+rem_need = []
+for i in range(procs):
+    temp = []
+    for j in range(len(resrs)):
+        a = max_need[i][j]-alloc[i][j]
+        temp.append(a)
+    rem_need.append(temp)
 
-        # If all processes finish, the system is in a safe state
-        return all(finish)
+f = [0]*procs
+ans = [0]*procs
+ind = 0
 
-    def allocate_resources(self, process, request):
-        if self.check_safety(process, request):
-            # If the allocation is safe, allocate the resources
-            for j in range(len(self.resources)):
-                self.allocated[process][j] += request[j]
-                self.available[j] -= request[j]
-            return True
-        else:
-            # If the allocation is not safe, reject the request
-            return False
+for k in range(procs):
+    f[k] = 0
 
+for k in range(procs):
+    for i in range(procs):
+        if f[i] == 0:
+            flag = 0
+            for j in range(len(resrs)):
+                if rem_need[i][j] > avail[j]:
+                    flag = 1
+                    break
+            if flag == 0:
+                ans[ind] = i
+                ind += 1
+                for y in range(len(resrs)):
+                    avail[y] += alloc[i][y]   
 
-# Example Usage:
-processes = [0, 1, 2, 3, 4]
-resources = [10, 5, 7]
-max_demand = [
-    [7, 5, 3],
-    [3, 2, 2],
-    [9, 0, 2],
-    [2, 2, 2],
-    [4, 3, 3]
-]
-allocated = [
-    [0, 1, 0],
-    [2, 0, 0],
-    [3, 0, 2],
-    [2, 1, 1],
-    [0, 0, 2]
-]
-
-banker = BankerAlgorithm(processes, resources, max_demand, allocated)
-
-# Example: Process 1 requests resources [1, 0, 2]
-process_to_request = 1
-request_resources = [1, 0, 2]
-
-if banker.allocate_resources(process_to_request, request_resources):
-    print(f"Allocation for Process {process_to_request} is safe.")
-else:
-    print(f"Allocation for Process {process_to_request} is unsafe.")
+print('Safe sequence')
+for i in range(procs-1):
+    print(f'P{ans[i]} ->')
